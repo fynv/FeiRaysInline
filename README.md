@@ -3,7 +3,7 @@
 This project tries to code a Vulkan acclerated PBRT system fully in Python.
 
 [VkInline](https://github.com/fynv/vkinline) provided an easy to use interface to access latest GPU power from Python.
-Based on VkInline, it is possible to contruct sophisticated hybrid CPU/GPU software system using OOP techniques.
+Based on VkInline, it is possible to contruct sophisticated hybrid CPU/GPU software systems using OOP techniques.
 
 Install VkInline:
 ```

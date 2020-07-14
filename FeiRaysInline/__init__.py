@@ -9,4 +9,4 @@ from .interaction import *
 from .scene import *
 from .path_tracer import *
 
-from .colored_unit_sphere import *
+from .lambert_sphere import *

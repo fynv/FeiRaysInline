@@ -3,9 +3,9 @@ import glm
 import VkInline as vki
 from .sphere import *
 
-class ColoredUnitSphere(Sphere):
+class LambertSphere(Sphere):
 	def __init__(self, modelMat = glm.identity(glm.mat4), color = (1.0, 1.0, 1.0)):
-		Sphere.__init__(self, 'colored_unit_spheres', 'HitInfo_Lambert')
+		Sphere.__init__(self, 'lambert_spheres', 'HitInfo_Lambert')
 		self.m_modelMat = modelMat
 		self.m_normMat = glm.transpose(glm.inverse(modelMat))
 		aabb = np.array([-1.0, -1.0, -1.0, 1.0, 1.0, 1.0], dtype = np.float32)

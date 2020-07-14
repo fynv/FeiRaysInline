@@ -103,27 +103,25 @@ void main()
     write_payload = '''
 void write_payload(in HitInfo hitinfo)
 {
+#ifdef HAS_EMISSION
     incr(payload.color, mult(emission(hitinfo), payload.f_att));
+#endif
     
-    if (has_bsdf(hitinfo))
-    {
-        vec3 wi;
-        float path_pdf;
-        Spectrum f = sample_bsdf(hitinfo, -payload.direction, wi, payload.rng_state, path_pdf);
-        if (path_pdf <= 0.0)
-        {
-            payload.finished = true;
-            return;       
-        }
-        amplify(payload.f_att, div(f, path_pdf));
-        payload.origin += payload.direction*hitinfo.t;
-        payload.direction = wi;
-    }
-    else
+#ifdef HAS_BSDF
+    vec3 wi;
+    float path_pdf;
+    Spectrum f = sample_bsdf(hitinfo, -payload.direction, wi, payload.rng_state, path_pdf);
+    if (path_pdf <= 0.0)
     {
         payload.finished = true;
+        return;       
     }
-
+    amplify(payload.f_att, div(f, path_pdf));
+    payload.origin += payload.direction*hitinfo.t;
+    payload.direction = wi;
+#else
+    payload.finished = true;
+#endif
 }
 '''
 
@@ -140,16 +138,6 @@ Spectrum emission(in HitInfo hitinfo)
     return get_sky_color(sky, hitinfo.dir);
 }
 
-bool has_bsdf(in HitInfo hitinfo)
-{
-    return false;
-}
-
-Spectrum sample_bsdf(in HitInfo hitinfo, in vec3 wo, inout vec3 wi, inout RNGState state, inout float path_pdf)
-{
-    return get_sky_color(sky, hitinfo.dir);
-}
-
 void write_payload(in HitInfo hitinfo);
 
 void main()
@@ -160,6 +148,7 @@ void main()
     write_payload(hitinfo);
 }
 
+#define HAS_EMISSION
 ''' + write_payload
 
     def trace(self, scene, num_iter = 100, interval = -1):
@@ -199,7 +188,7 @@ void main()
             end = i + interval
             if end > num_iter:
                 end = num_iter
-            ray_tracer.launch(self.m_batch_size, lst_params, [scene.m_tlas], times_submission = end - i)
+            ray_tracer.launch(self.m_batch_size, lst_params, [scene.m_tlas], tex2ds=scene.m_tex2d_list, tex3ds=scene.m_tex3d_list, cubemaps=scene.m_cubemap_list, times_submission = end - i)
             self.m_camera.m_film.inc_times_exposure(end - i)
             i = end;
 

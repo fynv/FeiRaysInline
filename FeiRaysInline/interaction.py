@@ -9,18 +9,6 @@ struct HitInfo_Lambert
     vec3 normal;
 };
 
-Spectrum emission(in HitInfo_Lambert hitinfo)
-{
-    Spectrum ret;
-    from_rgb(ret, vec3(0.0));
-    return ret;
-}
-
-bool has_bsdf(in HitInfo_Lambert hitinfo)
-{
-    return true;
-}
-
 Spectrum bsdf(in HitInfo_Lambert hitinfo, in vec3 wo, in vec3 wi)
 {
     Spectrum ret;
@@ -67,3 +55,14 @@ Spectrum sample_bsdf(in HitInfo_Lambert hitinfo, in vec3 wo, inout vec3 wi, inou
 }
 ''')
 vki.Add_Inlcude_Filename('interaction.shinc')
+
+map_features = {
+    'HitInfo_Lambert': ['HAS_BSDF']
+}
+
+def define_features(type_hitinfo):
+    features = map_features[type_hitinfo]
+    definitions = ''
+    for f in features:
+        definitions += '#define ' + f + '\n'
+    return definitions

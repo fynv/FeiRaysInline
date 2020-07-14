@@ -101,6 +101,8 @@ void main()
 }
 '''
     write_payload = '''
+layout(location = 0) rayPayloadInEXT Payload payload;
+
 void write_payload(in HitInfo hitinfo)
 {
 #ifdef HAS_EMISSION
@@ -126,7 +128,6 @@ void write_payload(in HitInfo hitinfo)
 '''
 
     miss = payload + '''
-layout(location = 0) rayPayloadInEXT Payload payload;
 struct HitInfo
 {
     float t;

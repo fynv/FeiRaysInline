@@ -14,7 +14,7 @@ class ColoredUnitSphere(Sphere):
 		self.d_normMat = vki.SVMat4x4(self.m_normMat)
 		self.d_color  = vki.SVVec3(glm.vec3(color))
 		self.m_cptr = SVCombine_Create({'normalMat':  self.d_normMat, 'color': self.d_color }, '''
-void closethit(in Comb_#hash# sphere, in vec3 hitpoint, inout RNGState state, inout HitInfo_Lambert hitinfo)
+void closethit(in Comb_#hash# sphere, in vec3 hitpoint, inout HitInfo_Lambert hitinfo)
 {
 	from_rgb(hitinfo.color, sphere.color);
 	hitinfo.normal = normalize((sphere.normalMat * vec4(hitpoint, 0.0)).xyz);	

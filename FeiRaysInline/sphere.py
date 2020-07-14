@@ -42,7 +42,6 @@ void main()
 }
 '''
 	tmpl_closest_hit = '''
-layout(location = 0) rayPayloadInEXT Payload payload;
 hitAttributeEXT vec3 hitpoint;
 #define HitInfo {hitinfo}
 void write_payload(in HitInfo hitinfo);
@@ -50,7 +49,7 @@ void main()
 {{
 	HitInfo hitinfo;
 	hitinfo.t = gl_HitTEXT;
-	closethit(get_value({sphere_list}, gl_InstanceCustomIndexEXT), hitpoint, payload.rng_state, hitinfo);
+	closethit(get_value({sphere_list}, gl_InstanceCustomIndexEXT), hitpoint, hitinfo);
 	write_payload(hitinfo);
 }}
 '''

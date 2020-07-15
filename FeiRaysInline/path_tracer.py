@@ -106,7 +106,7 @@ layout(location = 0) rayPayloadInEXT Payload payload;
 void write_payload(in HitInfo hitinfo)
 {
 #ifdef HAS_EMISSION
-    incr(payload.color, mult(emission(hitinfo), payload.f_att));
+    incr(payload.color, mult(Le(hitinfo, -payload.direction), payload.f_att));
 #endif
     
 #ifdef HAS_BSDF
@@ -131,12 +131,11 @@ void write_payload(in HitInfo hitinfo)
 struct HitInfo
 {
     float t;
-    vec3 dir;
 };
 
-Spectrum emission(in HitInfo hitinfo)
+Spectrum Le(in HitInfo hitinfo, in vec3 wo)
 {
-    return get_sky_color(sky, hitinfo.dir);
+    return get_sky_color(sky, -wo);
 }
 
 void write_payload(in HitInfo hitinfo);
@@ -145,7 +144,6 @@ void main()
 {
     HitInfo hitinfo;
     hitinfo.t = -1.0;
-    hitinfo.dir = gl_WorldRayDirectionEXT;
     write_payload(hitinfo);
 }
 

@@ -1,4 +1,6 @@
 import VkInline as vki
+from VkInline.SVCombine import *
+import glm
 
 vki.Add_Built_In_Header('spectrum.shinc', '''
 
@@ -21,108 +23,114 @@ vec3 xyz2rgb(in vec3 xyz)
 {
     return mat_xyz2rgb * xyz;
 }
+''')
 
-struct RGBSpectrum
-{
-    vec3 data;
-};
+vki.Add_Inlcude_Filename('spectrum.shinc')
 
-void incr(inout RGBSpectrum a, in RGBSpectrum b)
+class RGBSpectrum(vki.ShaderViewable):
+    def __init__(self):
+        self.m_data = vki.SVVec3(glm.vec3(0.0))
+        self.m_cptr = SVCombine_Create({'data':  self.m_data }, '''
+void incr(inout Comb_#hash# a, in Comb_#hash# b)
 {
     a.data += b.data;
 }
 
-RGBSpectrum add(in RGBSpectrum a, in RGBSpectrum b)
+Comb_#hash# add(in Comb_#hash# a, in Comb_#hash# b)
 {
-    RGBSpectrum ret;
+    Comb_#hash# ret;
     ret.data = a.data + b.data;
     return ret;
 }
 
-RGBSpectrum sub(in RGBSpectrum a, in RGBSpectrum b)
+Comb_#hash# sub(in Comb_#hash# a, in Comb_#hash# b)
 {
-    RGBSpectrum ret;
+    Comb_#hash# ret;
     ret.data = a.data - b.data;
     return ret;
 }
 
-RGBSpectrum mult(in RGBSpectrum a, in RGBSpectrum b)
+Comb_#hash# mult(in Comb_#hash# a, in Comb_#hash# b)
 {
-    RGBSpectrum ret;
+    Comb_#hash# ret;
     ret.data = a.data * b.data;
     return ret;
 }
 
-RGBSpectrum div(in RGBSpectrum a, in RGBSpectrum b)
+Comb_#hash# div(in Comb_#hash# a, in Comb_#hash# b)
 {
-    RGBSpectrum ret;
+    Comb_#hash# ret;
     ret.data = a.data / b.data;
     return ret;
 }
 
-RGBSpectrum mult(in RGBSpectrum a, float b)
+Comb_#hash# mult(in Comb_#hash# a, float b)
 {
-    RGBSpectrum ret;
+    Comb_#hash# ret;
     ret.data = a.data * b;
     return ret;
 }
 
 
-void amplify(inout RGBSpectrum a, in RGBSpectrum b )
+void amplify(inout Comb_#hash# a, in Comb_#hash# b )
 {
     a.data *= b.data;
 }
 
-void amplify(inout RGBSpectrum a, float b )
+void amplify(inout Comb_#hash# a, float b )
 {
     a.data *= b;
 }
 
-RGBSpectrum div(in RGBSpectrum a, float b)
+Comb_#hash# div(in Comb_#hash# a, float b)
 {
-    RGBSpectrum ret;
+    Comb_#hash# ret;
     ret.data = a.data / b;
     return ret;
 }
 
-void diminish(inout RGBSpectrum a, float b )
+void diminish(inout Comb_#hash# a, float b )
 {
     a.data /= b;
 }
 
-RGBSpectrum neg(in RGBSpectrum a)
+Comb_#hash# neg(in Comb_#hash# a)
 {
-    RGBSpectrum ret;
+    Comb_#hash# ret;
     ret.data =  -a.data;
     return ret; 
 }
 
-void from_rgb(out RGBSpectrum a, in vec3 rgb)
+void from_rgb(out Comb_#hash# a, in vec3 rgb)
 {
     a.data = rgb;
 }
 
-vec3 to_rgb(in RGBSpectrum a)
+vec3 to_rgb(in Comb_#hash# a)
 {
     return a.data;
 }
 
-void from_xyz(out RGBSpectrum a, in vec3 xyz)
+void from_xyz(out Comb_#hash# a, in vec3 xyz)
 {
     a.data = xyz2rgb(xyz);
 }
 
-vec3 to_xyz(in RGBSpectrum a)
+vec3 to_xyz(in Comb_#hash# a)
 {
     return rgb2xyz(a.data);
 }
 
-float max_component_value(in RGBSpectrum a)
+float max_component_value(in Comb_#hash# a)
 {
     return max(max(a.data.x, a.data.y), a.data.z);
 }
 
-#define Spectrum RGBSpectrum
+#define Spectrum Comb_#hash#
+
 ''')
-vki.Add_Inlcude_Filename('spectrum.shinc')
+
+RGBSpectrum.dummy = RGBSpectrum()
+Name_RGBSpectrum = RGBSpectrum.dummy.name_view_type()
+Spectrum = RGBSpectrum
 

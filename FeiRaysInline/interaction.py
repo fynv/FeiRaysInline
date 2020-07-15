@@ -1,46 +1,44 @@
 import VkInline as vki
+from VkInline.SVCombine import *
+import glm
+from .spectrum import *
 
-vki.Add_Built_In_Header('interaction.shinc', '''
-
-struct HitInfo_Lambert
-{
-    float t;
-    Spectrum color;
-    vec3 normal;
-};
-
-Spectrum bsdf(in HitInfo_Lambert hitinfo, in vec3 wo, in vec3 wi)
+class BSDF_Lambert(vki.ShaderViewable): 
+    def __init__(self):
+        self.m_color = Spectrum()
+        self.m_cptr = SVCombine_Create({'color':  self.m_color }, '''
+Spectrum bsdf(in Comb_#hash# self, in vec3 n, in vec3 wo, in vec3 wi)
 {
     Spectrum ret;
-    float d = dot(wi, hitinfo.normal);
+    float d = dot(wi, n);
     if (d<=0.0)
     {
         from_rgb(ret, vec3(0.0));
     }
     else
     {
-        ret = mult(hitinfo.color, d/radians(180.0));
+        ret = mult(self.color, d/radians(180.0));
     }
     return ret;
 }
 
-float pdf(in HitInfo_Lambert hitinfo, in vec3 wo, in vec3 wi)
+float pdf(in Comb_#hash# self, in vec3 n, in vec3 wo, in vec3 wi)
 {
-    float d = dot(wi, hitinfo.normal);
+    float d = dot(wi, n);
     if (d<=0.0) return 0.0;
     return d/radians(180.0);
 }
 
-Spectrum sample_bsdf(in HitInfo_Lambert hitinfo, in vec3 wo, inout vec3 wi, inout RNGState state, inout float path_pdf)
+Spectrum sample_bsdf(in Comb_#hash# self, in vec3 n,  in vec3 wo, inout vec3 wi, inout RNGState state, inout float path_pdf)
 {
     vec3 a, b;
-    if (abs(hitinfo.normal.x)>0.8)
+    if (abs(n.x)>0.8)
         a = vec3(0.0, 1.0, 0.0);
     else 
         a = vec3(1.0, 0.0, 0.0);
 
-    a = normalize(cross(a, hitinfo.normal));
-    b = cross(a, hitinfo.normal);
+    a = normalize(cross(a, n));
+    b = cross(a, n);
 
     float z = sqrt(rand01(state));
     float xy = sqrt(1.0 - z*z);
@@ -48,16 +46,42 @@ Spectrum sample_bsdf(in HitInfo_Lambert hitinfo, in vec3 wo, inout vec3 wi, inou
     float x = xy * cos(alpha);
     float y = xy * sin(alpha);
 
-    wi = x*a + y*b + z * hitinfo.normal;
+    wi = x*a + y*b + z * n;
 
-    path_pdf = pdf(hitinfo, wo, wi);
-    return bsdf(hitinfo, wo, wi);
+    path_pdf = pdf(self, n, wo, wi);
+    return bsdf(self, n, wo, wi);
 }
 ''')
-vki.Add_Inlcude_Filename('interaction.shinc')
+
+BSDF_Lambert.dummy = BSDF_Lambert()
+Name_BSDF_Lambert = BSDF_Lambert.dummy.name_view_type()
+
+class HitInfo_Lambert(vki.ShaderViewable):
+    def __init__(self):
+        self.m_t = vki.SVFloat(0.0)
+        self.m_normal = vki.SVVec3(glm.vec3(0.0))
+        self.m_cptr = SVCombine_Create({'t':  self.m_t, 'normal': self.m_normal, 'lambert': BSDF_Lambert.dummy }, '''
+Spectrum bsdf(in Comb_#hash# self, in vec3 wo, in vec3 wi)
+{
+    return bsdf(self.lambert, self.normal, wo, wi);
+}
+
+float pdf(in Comb_#hash# self, in vec3 wo, in vec3 wi)
+{
+    return pdf(self.lambert, self.normal, wo, wi);
+}
+
+Spectrum sample_bsdf(in Comb_#hash# self, in vec3 wo, inout vec3 wi, inout RNGState state, inout float path_pdf)
+{
+    return sample_bsdf(self.lambert, self.normal, wo, wi, state, path_pdf);
+}
+''')
+
+HitInfo_Lambert.dummy = HitInfo_Lambert()
+Name_HitInfo_Lambert = HitInfo_Lambert.dummy.name_view_type()
 
 map_features = {
-    'HitInfo_Lambert': ['HAS_BSDF']
+    Name_HitInfo_Lambert: ['HAS_BSDF']
 }
 
 def define_features(type_hitinfo):

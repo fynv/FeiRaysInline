@@ -3,11 +3,11 @@ from VkInline.SVCombine import *
 import glm
 from .spectrum import *
 
-class BSDF_Lambert(vki.ShaderViewable): 
+class BxDF_Lambert(vki.ShaderViewable): 
     def __init__(self):
         self.m_color = Spectrum()
         self.m_cptr = SVCombine_Create({'color':  self.m_color }, '''
-Spectrum bsdf(in Comb_#hash# self, in vec3 n, in vec3 wo, in vec3 wi)
+Spectrum f(in Comb_#hash# self, in vec3 n, in vec3 wo, in vec3 wi)
 {
     Spectrum ret;
     float d = dot(wi, n);
@@ -29,7 +29,7 @@ float pdf(in Comb_#hash# self, in vec3 n, in vec3 wo, in vec3 wi)
     return d/radians(180.0);
 }
 
-Spectrum sample_bsdf(in Comb_#hash# self, in vec3 n,  in vec3 wo, inout vec3 wi, inout RNGState state, inout float path_pdf)
+Spectrum sample_f(in Comb_#hash# self, in vec3 n,  in vec3 wo, inout vec3 wi, inout RNGState state, inout float path_pdf)
 {
     vec3 a, b;
     if (abs(n.x)>0.8)
@@ -49,31 +49,31 @@ Spectrum sample_bsdf(in Comb_#hash# self, in vec3 n,  in vec3 wo, inout vec3 wi,
     wi = x*a + y*b + z * n;
 
     path_pdf = pdf(self, n, wo, wi);
-    return bsdf(self, n, wo, wi);
+    return f(self, n, wo, wi);
 }
 ''')
 
-BSDF_Lambert.dummy = BSDF_Lambert()
-Name_BSDF_Lambert = BSDF_Lambert.dummy.name_view_type()
+BxDF_Lambert.dummy = BxDF_Lambert()
+Name_BxDF_Lambert = BxDF_Lambert.dummy.name_view_type()
 
 class HitInfo_Lambert(vki.ShaderViewable):
     def __init__(self):
         self.m_t = vki.SVFloat(0.0)
         self.m_normal = vki.SVVec3(glm.vec3(0.0))
-        self.m_cptr = SVCombine_Create({'t':  self.m_t, 'normal': self.m_normal, 'lambert': BSDF_Lambert.dummy }, '''
-Spectrum bsdf(in Comb_#hash# self, in vec3 wo, in vec3 wi)
+        self.m_cptr = SVCombine_Create({'t':  self.m_t, 'normal': self.m_normal, 'lambert': BxDF_Lambert.dummy }, '''
+Spectrum evaluate_bsdf(in Comb_#hash# self, in vec3 wo, in vec3 wi)
 {
-    return bsdf(self.lambert, self.normal, wo, wi);
+    return f(self.lambert, self.normal, wo, wi);
 }
 
-float pdf(in Comb_#hash# self, in vec3 wo, in vec3 wi)
+float pdf_bsdf(in Comb_#hash# self, in vec3 wo, in vec3 wi)
 {
     return pdf(self.lambert, self.normal, wo, wi);
 }
 
 Spectrum sample_bsdf(in Comb_#hash# self, in vec3 wo, inout vec3 wi, inout RNGState state, inout float path_pdf)
 {
-    return sample_bsdf(self.lambert, self.normal, wo, wi, state, path_pdf);
+    return sample_f(self.lambert, self.normal, wo, wi, state, path_pdf);
 }
 ''')
 

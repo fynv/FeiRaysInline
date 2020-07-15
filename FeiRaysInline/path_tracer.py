@@ -162,25 +162,27 @@ void main()
         print("Doing ray-tracing..")
 
         lst_param_names = ['camera','states', 'sky'] 
-        for key in scene.m_geo_lists:
-            sublist = scene.m_geo_lists[key]
+        for key in scene.m_obj_lists:
+            sublist = scene.m_obj_lists[key]
             lst_param_names += [sublist['name']]
 
         hit_shaders = []
-        for key in scene.m_geo_lists:
-            geo = scene.m_geo_lists[key]['lst'][0]
-            closest_hit  = self.payload + geo.closest_hit + self.write_payload
-            intersection = None
-            if hasattr(geo, 'intersection'):
-                intersection = geo.intersection
-            hit_shaders += [vki.HitShaders(closest_hit = closest_hit, intersection = intersection)]
+        for key in scene.m_obj_lists:
+            sublist = scene.m_obj_lists[key]
+            if sublist['is_geometry']:
+                geo = sublist['lst'][0]
+                closest_hit  = self.payload + geo.closest_hit + self.write_payload
+                intersection = None
+                if hasattr(geo, 'intersection'):
+                    intersection = geo.intersection
+                hit_shaders += [vki.HitShaders(closest_hit = closest_hit, intersection = intersection)]
 
         ray_tracer = vki.RayTracer(lst_param_names, self.raygen, [self.miss], hit_shaders)
 
         if interval == -1:
             interval = num_iter;
 
-        lst_params = [self.m_camera, self.m_rng_states, scene.m_sky] + scene.m_lst_geo_lsts
+        lst_params = [self.m_camera, self.m_rng_states, scene.m_sky] + scene.m_lst_obj_lsts
 
         i = 0
         while i < num_iter:

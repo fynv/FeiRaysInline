@@ -169,12 +169,9 @@ void main()
         hit_shaders = []
         for key in scene.m_obj_lists:
             sublist = scene.m_obj_lists[key]
-            if sublist['is_geometry']:
-                geo = sublist['lst'][0]
-                closest_hit  = self.payload + geo.closest_hit + self.write_payload
-                intersection = None
-                if hasattr(geo, 'intersection'):
-                    intersection = geo.intersection
+            if sublist['is_geometry']:                
+                closest_hit  = self.payload + sublist['closest_hit'] + self.write_payload
+                intersection = sublist['intersection']                
                 hit_shaders += [vki.HitShaders(closest_hit = closest_hit, intersection = intersection)]
 
         ray_tracer = vki.RayTracer(lst_param_names, self.raygen, [self.miss], hit_shaders)

@@ -53,9 +53,10 @@ void main()
     write_payload(hitinfo);
 }}
 '''
-
     def __init__(self, name_sphere_list, type_hitinfo):
         self.name_lst = name_sphere_list
         self.closest_hit = self.tmpl_closest_hit.format(sphere_list = name_sphere_list, hitinfo = type_hitinfo)
         self.closest_hit += define_features(type_hitinfo)
-        
+
+    is_geometry = True        
+    

@@ -9,7 +9,7 @@ class PointLight(vki.ShaderViewable):
         self.m_pos = vki.SVVec3(glm.vec3(position))
         self.m_intensity = Spectrum(intensity)
         self.m_cptr = SVCombine_Create({'pos': self.m_pos, 'intensity': self.m_intensity}, '''
-Spectrum sample_l(in Comb_#hash# self, in vec3 ip, inout vec3 dirToLight, inout float distance, inout float pdfw)
+Spectrum sample_l(in Comb_#hash# self, in vec3 ip, inout RNGState state, inout vec3 dirToLight, inout float distance, inout float pdfw)
 {
     vec3 v = self.pos - ip;
     float len = v.length();

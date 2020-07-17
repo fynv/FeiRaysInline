@@ -190,7 +190,7 @@ void write_payload(in HitInfo hitinfo)
                 p = get_value(pdf_lights, light_id);
                 if (sample_light<=p)
                 {{            
-                    intesity = sample_l(get_value({name_list}, i), payload.origin, dir, light_dis, pdfw);
+                    intesity = sample_l(get_value({name_list}, i), payload.origin, payload.rng_state, dir, light_dis, pdfw);
                     pdfw*= p - old_p;                    
                     break;
                 }}

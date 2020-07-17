@@ -1,6 +1,7 @@
 import numpy as np
 import glm
 import VkInline as vki
+from .spectrum import *
 from .sphere import *
 from .interaction import *
 
@@ -13,11 +14,11 @@ class LambertSphere(Sphere):
         d_aabb = vki.device_vector_from_numpy(aabb)
         self.m_blas = vki.BaseLevelAS(gpuAABB = d_aabb)
         self.d_normMat = vki.SVMat4x4(self.m_normMat)
-        self.d_color  = vki.SVVec3(glm.vec3(color))
+        self.d_color  = Spectrum(color)
         self.m_cptr = SVCombine_Create({'normalMat':  self.d_normMat, 'color': self.d_color }, '''
 void closethit(in Comb_#hash# sphere, in vec3 hitpoint, inout {HitInfo_Lambert} hitinfo)
 {{
-    from_rgb(hitinfo.lambert.color, sphere.color);
+    hitinfo.lambert.color = sphere.color;
     hitinfo.normal = normalize((sphere.normalMat * vec4(hitpoint, 0.0)).xyz);   
 }}
 '''.format(HitInfo_Lambert = Name_HitInfo_Lambert))

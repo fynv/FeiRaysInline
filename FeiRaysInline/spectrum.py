@@ -28,8 +28,8 @@ vec3 xyz2rgb(in vec3 xyz)
 vki.Add_Inlcude_Filename('spectrum.shinc')
 
 class RGBSpectrum(vki.ShaderViewable):
-    def __init__(self):
-        self.m_data = vki.SVVec3(glm.vec3(0.0))
+    def __init__(self, color = (0.0, 0.0, 0.0)):
+        self.m_data = vki.SVVec3(glm.vec3(color))
         self.m_cptr = SVCombine_Create({'data':  self.m_data }, '''
 void incr(inout Comb_#hash# a, in Comb_#hash# b)
 {
@@ -65,6 +65,13 @@ Comb_#hash# div(in Comb_#hash# a, in Comb_#hash# b)
 }
 
 Comb_#hash# mult(in Comb_#hash# a, float b)
+{
+    Comb_#hash# ret;
+    ret.data = a.data * b;
+    return ret;
+}
+
+Comb_#hash# mult(float b, in Comb_#hash# a)
 {
     Comb_#hash# ret;
     ret.data = a.data * b;

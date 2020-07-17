@@ -17,12 +17,17 @@ class PathTracer:
     payload = '''
 struct Payload
 {
+    bool is_visibility;
+
     RNGState rng_state;
     Spectrum color;
     Spectrum f_att;
     bool finished;
     vec3 origin;
     vec3 direction;    
+
+    float distance;
+    int light_id;
 };
 '''
 
@@ -63,6 +68,7 @@ void rt_main(int ix, int iy)
         }       
 
         uint rayFlags = gl_RayFlagsOpaqueEXT;
+        payload.is_visibility = false;
         traceRayEXT(arr_tlas[0], rayFlags, cullMask, 0, 0, 0, payload.origin, tmin, payload.direction, tmax, 0);
 
         if (payload.finished) break;
@@ -103,34 +109,79 @@ void main()
     write_payload = '''
 layout(location = 0) rayPayloadInEXT Payload payload;
 
+void write_payload_visibility(in HitInfo hitinfo)
+{{
+    payload.distance = hitinfo.t;
+#ifdef HAS_EMISSION
+    payload.light_id = hitinfo.light_id;
+#else
+    payload.light_id = -1;
+#endif
+}}
+
 void write_payload(in HitInfo hitinfo)
-{
+{{
+    if (payload.is_visibility)
+    {{
+        write_payload_visibility(hitinfo);
+        return;
+    }}
+
 #ifdef HAS_EMISSION
     incr(payload.color, mult(Le(hitinfo, -payload.direction), payload.f_att));
 #endif
     
-#ifdef HAS_BSDF
+#ifdef HAS_BSDF    
+    payload.origin += payload.direction*hitinfo.t;
+    {apply_lights}
+
     vec3 wi;
     float path_pdf;
     Spectrum f = sample_bsdf(hitinfo, -payload.direction, wi, payload.rng_state, path_pdf);
     if (path_pdf <= 0.0)
-    {
+    {{
         payload.finished = true;
         return;       
-    }
-    amplify(payload.f_att, div(f, path_pdf));
-    payload.origin += payload.direction*hitinfo.t;
+    }}
+    amplify(payload.f_att, div(f, path_pdf));    
     payload.direction = wi;
 #else
     payload.finished = true;
 #endif
-}
+}}
+'''
+
+
+    template_apply_lights = '''
+    for (uint i=0; i<get_size({name_list}); i++)
+    {{
+        vec3 dir;
+        float light_dis;
+        float pdfw;
+        Spectrum intesity = sample_l(get_value({name_list}, i), payload.origin, payload.rng_state, dir, light_dis, pdfw);
+
+        uint cullMask = 0xff;
+        float tmin = 0.001;
+        float tmax = 1000000.0;
+
+        uint rayFlags = gl_RayFlagsOpaqueEXT;
+        payload.is_visibility = true;
+        traceRayEXT(arr_tlas[0], rayFlags, cullMask, 0, 0, 0, payload.origin, tmin, dir, tmax, 0);
+
+        if (payload.distance<0.0 || light_dis <= payload.distance)
+        {{
+            Spectrum f = evaluate_bsdf(hitinfo, -payload.direction, dir);
+            Spectrum att = mult(payload.f_att, div(f, pdfw));               
+            incr(payload.color, mult(intesity, att));
+        }}
+    }}
 '''
 
     miss = payload + '''
 struct HitInfo
 {
     float t;
+    int light_id;
 };
 
 Spectrum Le(in HitInfo hitinfo, in vec3 wo)
@@ -144,11 +195,12 @@ void main()
 {
     HitInfo hitinfo;
     hitinfo.t = -1.0;
+    hitinfo.light_id = 0;
     write_payload(hitinfo);
 }
 
 #define HAS_EMISSION
-''' + write_payload
+''' + write_payload.format(apply_lights='')
 
     def trace(self, scene, num_iter = 100, interval = -1):
         if self.m_rng_states == None:
@@ -158,6 +210,12 @@ void main()
             initializer.InitRNGVector(self.m_rng_states)
 
         scene.update()
+
+        apply_lights = ''
+        for key in scene.m_obj_lists:
+            sublist = scene.m_obj_lists[key]
+            if sublist['is_light_source']:
+                apply_lights += self.template_apply_lights.format(name_list = sublist['name'])
 
         print("Doing ray-tracing..")
 
@@ -170,7 +228,7 @@ void main()
         for key in scene.m_obj_lists:
             sublist = scene.m_obj_lists[key]
             if sublist['is_geometry']:                
-                closest_hit  = self.payload + sublist['closest_hit'] + self.write_payload
+                closest_hit  = self.payload + sublist['closest_hit'] + self.write_payload.format(apply_lights=apply_lights)
                 intersection = sublist['intersection']                
                 hit_shaders += [vki.HitShaders(closest_hit = closest_hit, intersection = intersection)]
 

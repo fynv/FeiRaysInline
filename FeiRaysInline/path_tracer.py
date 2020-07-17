@@ -142,9 +142,10 @@ void write_payload(in HitInfo hitinfo)
         float pdfw;
         Spectrum intesity;
         float sample_light = rand01(payload.rng_state);
+        float p = 0.0;
         {apply_lights}
 
-        if (sample_light<0.0)
+        if (sample_light<=p)
         {{
             uint cullMask = 0xff;
             float tmin = 0.001;
@@ -180,17 +181,17 @@ void write_payload(in HitInfo hitinfo)
 '''
 
     template_apply_lights = '''
-        if (sample_light>=0.0)
+        if (sample_light>p)
         {{
             for (uint i=0; i<get_size({name_list}); i++)
             {{
                 light_id++;
-                float p = get_value(pdf_lights, light_id);
+                float old_p = p;
+                p = get_value(pdf_lights, light_id);
                 if (sample_light<=p)
                 {{            
                     intesity = sample_l(get_value({name_list}, i), payload.origin, dir, light_dis, pdfw);
-                    pdfw*= p - get_value(pdf_lights, light_id-1);
-                    sample_light = -1.0;
+                    pdfw*= p - old_p;                    
                     break;
                 }}
             }}

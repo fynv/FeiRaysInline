@@ -23,10 +23,10 @@ scene.set_sky(sky)
 sky = fri.GradientSky((0.0,0.0,0.0), (0.0,0.0,0.0))
 scene.set_sky(sky)
 
-point_light0 = fri.PointLight((5.0, 20.0, -5.0), (1.0, 1.0, 1.0))
+point_light0 = fri.PointLight((5.0, 20.0, -5.0), (1.0, 1.0, 0.5))
 scene.add_object(point_light0)
 
-point_light1 = fri.PointLight((5.0, 20.0, 5.0), (1.0, 1.0, 1.0))
+point_light1 = fri.PointLight((5.0, 20.0, 5.0), (1.0, 0.5, 0.5))
 scene.add_object(point_light1)
 
 identity = glm.identity(glm.mat4)

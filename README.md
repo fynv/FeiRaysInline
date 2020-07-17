@@ -5,7 +5,7 @@ This project tries to code a Vulkan acclerated PBRT system fully in Python.
 [VkInline](https://github.com/fynv/vkinline) provided an easy to use interface to access latest GPU power from Python.
 Based on VkInline, it is possible to contruct sophisticated hybrid CPU/GPU software systems using OOP techniques.
 
-Not that the ray-tracing acceleration is powered by VK_KHR_ray_tracing. For Nvidia users, a [Nvidia Beta driver](https://developer.nvidia.com/vulkan-driver) might be needed.
+Note that the ray-tracing acceleration is powered by VK_KHR_ray_tracing. For Nvidia users, a [Nvidia Beta driver](https://developer.nvidia.com/vulkan-driver) might be needed.
 
 
 Install VkInline:

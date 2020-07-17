@@ -133,7 +133,35 @@ void write_payload(in HitInfo hitinfo)
     
 #ifdef HAS_BSDF    
     payload.origin += payload.direction*hitinfo.t;
-    {apply_lights}
+
+    if (get_size(pdf_lights)>1)
+    {{
+        int light_id = 0;
+        vec3 dir;
+        float light_dis;
+        float pdfw;
+        Spectrum intesity;
+        float sample_light = rand01(payload.rng_state);
+        {apply_lights}
+
+        if (sample_light<0.0)
+        {{
+            uint cullMask = 0xff;
+            float tmin = 0.001;
+            float tmax = 1000000.0;
+
+            uint rayFlags = gl_RayFlagsOpaqueEXT;
+            payload.is_visibility = true;
+            traceRayEXT(arr_tlas[0], rayFlags, cullMask, 0, 0, 0, payload.origin, tmin, dir, tmax, 0);
+
+            if (payload.light_id == light_id || payload.distance<0.0 || light_dis <= payload.distance)
+            {{
+                Spectrum f = evaluate_bsdf(hitinfo, -payload.direction, dir);
+                Spectrum att = mult(payload.f_att, div(f, pdfw));               
+                incr(payload.color, mult(intesity, att));
+            }}
+        }}
+    }}
 
     vec3 wi;
     float path_pdf;
@@ -151,30 +179,22 @@ void write_payload(in HitInfo hitinfo)
 }}
 '''
 
-
     template_apply_lights = '''
-    for (uint i=0; i<get_size({name_list}); i++)
-    {{
-        vec3 dir;
-        float light_dis;
-        float pdfw;
-        Spectrum intesity = sample_l(get_value({name_list}, i), payload.origin, payload.rng_state, dir, light_dis, pdfw);
-
-        uint cullMask = 0xff;
-        float tmin = 0.001;
-        float tmax = 1000000.0;
-
-        uint rayFlags = gl_RayFlagsOpaqueEXT;
-        payload.is_visibility = true;
-        traceRayEXT(arr_tlas[0], rayFlags, cullMask, 0, 0, 0, payload.origin, tmin, dir, tmax, 0);
-
-        if (payload.distance<0.0 || light_dis <= payload.distance)
+        if (sample_light>=0.0)
         {{
-            Spectrum f = evaluate_bsdf(hitinfo, -payload.direction, dir);
-            Spectrum att = mult(payload.f_att, div(f, pdfw));               
-            incr(payload.color, mult(intesity, att));
+            for (uint i=0; i<get_size({name_list}); i++)
+            {{
+                light_id++;
+                float p = get_value(pdf_lights, light_id);
+                if (sample_light<=p)
+                {{            
+                    intesity = sample_l(get_value({name_list}, i), payload.origin, dir, light_dis, pdfw);
+                    pdfw*= p - get_value(pdf_lights, light_id-1);
+                    sample_light = -1.0;
+                    break;
+                }}
+            }}
         }}
-    }}
 '''
 
     miss = payload + '''
@@ -219,7 +239,7 @@ void main()
 
         print("Doing ray-tracing..")
 
-        lst_param_names = ['camera','states', 'sky'] 
+        lst_param_names = ['camera','states', 'sky', 'pdf_lights'] 
         for key in scene.m_obj_lists:
             sublist = scene.m_obj_lists[key]
             lst_param_names += [sublist['name']]
@@ -237,7 +257,8 @@ void main()
         if interval == -1:
             interval = num_iter;
 
-        lst_params = [self.m_camera, self.m_rng_states, scene.m_sky] + scene.m_lst_obj_lsts
+        lst_params = [self.m_camera, self.m_rng_states, scene.m_sky, scene.m_pdf_lights] + scene.m_lst_obj_lsts
+
 
         i = 0
         while i < num_iter:

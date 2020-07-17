@@ -47,13 +47,29 @@ class Scene:
             print("Building TLAS..")
             self.m_lst_obj_lsts =[]
             lst_blas = []
+            power_lights = []
             for key in self.m_obj_lists:
                 sublist = self.m_obj_lists[key]
                 self.m_lst_obj_lsts += [vki.SVObjVector(sublist['lst'])]
                 if sublist['is_geometry']:
                     sublist_blas = [(obj.m_blas, obj.m_modelMat) for obj in sublist['lst']]
                     lst_blas += [sublist_blas]
+                if sublist['is_light_source']:
+                    power_lights += [light.power() for light in sublist['lst']]
             self.m_tlas = vki.TopLevelAS(lst_blas)
+            
+
+            sum_power = 0.0
+            for p in power_lights:
+                sum_power += p
+
+            pdf = 0.0
+            light_pdf = [0.0]
+            for p in power_lights:
+                pdf += p
+                light_pdf += [pdf/sum_power]
+
+            self.m_pdf_lights = vki.device_vector_from_list(light_pdf, 'float')
             self.m_need_update = False
 
     

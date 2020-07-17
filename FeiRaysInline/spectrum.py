@@ -29,8 +29,9 @@ vki.Add_Inlcude_Filename('spectrum.shinc')
 
 class RGBSpectrum(vki.ShaderViewable):
     def __init__(self, color = (0.0, 0.0, 0.0)):
-        self.m_data = vki.SVVec3(glm.vec3(color))
-        self.m_cptr = SVCombine_Create({'data':  self.m_data }, '''
+        self.m_rgb = glm.vec3(color)
+        self.m_svdata = vki.SVVec3(self.m_rgb)
+        self.m_cptr = SVCombine_Create({'data':  self.m_svdata }, '''
 void incr(inout Comb_#hash# a, in Comb_#hash# b)
 {
     a.data += b.data;
@@ -136,6 +137,8 @@ float max_component_value(in Comb_#hash# a)
 #define Spectrum Comb_#hash#
 
 ''')
+    def Intensity(self):
+        return 0.212671*self.m_rgb[0] + 0.715160*self.m_rgb[1] + 0.072169*self.m_rgb[2]
 
 RGBSpectrum.dummy = RGBSpectrum()
 Name_RGBSpectrum = RGBSpectrum.dummy.name_view_type()

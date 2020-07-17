@@ -1,6 +1,7 @@
 import glm
 import VkInline as vki
 from .sky import *
+from .SVObjVectorEx import *
 
 class Scene:
     def __init__(self):
@@ -48,14 +49,19 @@ class Scene:
             self.m_lst_obj_lsts =[]
             lst_blas = []
             power_lights = []
+            light_id_offset = 1
             for key in self.m_obj_lists:
                 sublist = self.m_obj_lists[key]
-                self.m_lst_obj_lsts += [vki.SVObjVector(sublist['lst'])]
+                if sublist['is_light_source']:
+                    power_lights += [light.power() for light in sublist['lst']]
+                    self.m_lst_obj_lsts += [SVObjVectorEx(sublist['lst'], light_id_offset)]
+                    light_id_offset += len(sublist['lst'])
+                else:
+                    self.m_lst_obj_lsts += [vki.SVObjVector(sublist['lst'])]
                 if sublist['is_geometry']:
                     sublist_blas = [(obj.m_blas, obj.m_modelMat) for obj in sublist['lst']]
                     lst_blas += [sublist_blas]
-                if sublist['is_light_source']:
-                    power_lights += [light.power() for light in sublist['lst']]
+                
             self.m_tlas = vki.TopLevelAS(lst_blas)
             
 

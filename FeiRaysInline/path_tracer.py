@@ -20,6 +20,7 @@ struct Payload
     bool is_visibility;
 
     RNGState rng_state;
+    int depth;
     Spectrum color;
     Spectrum f_att;
     bool finished;
@@ -49,14 +50,14 @@ void rt_main(int ix, int iy)
 
     generate_ray(camera, fx, fy, rnd_lens.x, rnd_lens.y, payload.origin, payload.direction);    
 
-    int depth = 0;
     const float russian_roulette_factor = 0.1;
 
     uint cullMask = 0xff;
     float tmin = 0.001;
     float tmax = 1000000.0;
 
-    while (depth < 10)
+    payload.depth = 0;
+    while (payload.depth < 10)
     {
         //  Russian Roulette
         float max_att = max_component_value(payload.f_att);
@@ -73,7 +74,7 @@ void rt_main(int ix, int iy)
 
         if (payload.finished) break;
 
-        depth++;
+        payload.depth++;
     }
 
     incr_pixel(camera.film, ix, iy, payload.color);
@@ -128,7 +129,8 @@ void write_payload(in HitInfo hitinfo)
     }}
 
 #ifdef HAS_EMISSION
-    incr(payload.color, mult(Le(hitinfo, -payload.direction), payload.f_att));
+    if (hitinfo.light_id == 0 || payload.depth<1)
+        incr(payload.color, mult(Le(hitinfo, -payload.direction), payload.f_att));
 #endif
     
 #ifdef HAS_BSDF    
@@ -145,7 +147,7 @@ void write_payload(in HitInfo hitinfo)
         float p = 0.0;
         {apply_lights}
 
-        if (sample_light<=p)
+        if (sample_light<=p && pdfw>0.0)
         {{
             uint cullMask = 0xff;
             float tmin = 0.001;
@@ -191,7 +193,8 @@ void write_payload(in HitInfo hitinfo)
                 if (sample_light<=p)
                 {{            
                     intesity = sample_l(get_value({name_list}, i), payload.origin, payload.rng_state, dir, light_dis, pdfw);
-                    pdfw*= p - old_p;                    
+                    if (pdfw>0.0)
+                        pdfw*= p - old_p;                    
                     break;
                 }}
             }}

@@ -1,8 +1,13 @@
+import numpy as np
 import VkInline as vki
 from VkInline.SVCombine import *
-from .interaction import *
 
 class Sphere(vki.ShaderViewable):           
+    def __init__(self):
+        aabb = np.array([-1.0, -1.0, -1.0, 1.0, 1.0, 1.0], dtype = np.float32)
+        d_aabb = vki.device_vector_from_numpy(aabb)
+        self.m_blas = vki.BaseLevelAS(gpuAABB = d_aabb)        
+
     intersection = '''
 hitAttributeEXT vec3 hitpoint;
 
@@ -40,23 +45,5 @@ void main()
     }
 
 }
-'''
-    tmpl_closest_hit = '''
-hitAttributeEXT vec3 hitpoint;
-#define HitInfo {hitinfo}
-void write_payload(in HitInfo hitinfo);
-void main()
-{{
-    HitInfo hitinfo;
-    hitinfo.t = gl_HitTEXT;
-    closethit(get_value({sphere_list}, gl_InstanceCustomIndexEXT), hitpoint, hitinfo);
-    write_payload(hitinfo);
-}}
-'''
-    def __init__(self, name_sphere_list, type_hitinfo):
-        self.name_lst = name_sphere_list
-        self.closest_hit = self.tmpl_closest_hit.format(sphere_list = name_sphere_list, hitinfo = type_hitinfo)
-        self.closest_hit += define_features(type_hitinfo)
-
-    is_geometry = True        
-    
+'''    
+    is_geometry = True

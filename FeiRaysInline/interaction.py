@@ -80,8 +80,25 @@ Spectrum sample_bsdf(in Comb_#hash# self, in vec3 wo, inout vec3 wi, inout RNGSt
 HitInfo_Lambert.dummy = HitInfo_Lambert()
 Name_HitInfo_Lambert = HitInfo_Lambert.dummy.name_view_type()
 
+class HitInfo_UniformEmissive(vki.ShaderViewable):
+    def __init__(self):
+        self.m_t = vki.SVFloat(0.0)
+        self.m_light_id = vki.SVInt32(0)        
+        self.m_intensity = Spectrum()
+        self.m_cptr = SVCombine_Create({'t':  self.m_t, 'light_id': self.m_light_id, 'intensity': self.m_intensity}, '''
+Spectrum Le(in Comb_#hash# self, in vec3 wo)
+{
+    return self.intensity;
+}
+''')
+
+HitInfo_UniformEmissive.dummy = HitInfo_UniformEmissive()
+Name_HitInfo_UniformEmissive = HitInfo_UniformEmissive.dummy.name_view_type()
+
+
 map_features = {
-    Name_HitInfo_Lambert: ['HAS_BSDF']
+    Name_HitInfo_Lambert: ['HAS_BSDF'],
+    Name_HitInfo_UniformEmissive: ['HAS_EMISSION']
 }
 
 def define_features(type_hitinfo):

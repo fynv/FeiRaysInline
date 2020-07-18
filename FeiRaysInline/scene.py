@@ -50,6 +50,7 @@ class Scene:
             lst_blas = []
             power_lights = []
             light_id_offset = 1
+            self.m_aabb = None
             for key in self.m_obj_lists:
                 sublist = self.m_obj_lists[key]
                 if sublist['is_light_source']:
@@ -61,6 +62,16 @@ class Scene:
                 if sublist['is_geometry']:
                     sublist_blas = [(obj.m_blas, obj.m_modelMat) for obj in sublist['lst']]
                     lst_blas += [sublist_blas]
+                    if self.m_aabb is None:
+                        self.m_aabb = sublist['lst'][0].get_world_aabb()
+                    for obj in sublist['lst']:
+                        aabb = obj.get_world_aabb()
+                        self.m_aabb[0] = min(self.m_aabb[0], aabb[0])
+                        self.m_aabb[1] = min(self.m_aabb[1], aabb[1])
+                        self.m_aabb[2] = min(self.m_aabb[2], aabb[2])
+                        self.m_aabb[3] = max(self.m_aabb[3], aabb[3])
+                        self.m_aabb[4] = max(self.m_aabb[4], aabb[4])
+                        self.m_aabb[5] = max(self.m_aabb[5], aabb[5])
                 
             self.m_tlas = vki.TopLevelAS(lst_blas)
             

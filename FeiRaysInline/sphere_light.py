@@ -7,11 +7,11 @@ from .interaction import *
 
 class SphereLight(Sphere):
     def __init__(self, center, r, color, intensity):
-        Sphere.__init__(self)
-        self.m_r = r
         modelMat = glm.identity(glm.mat4)
         modelMat = glm.translate(modelMat, glm.vec3(center))
-        self.m_modelMat = glm.scale(modelMat, glm.vec3(r, r, r))
+        modelMat = glm.scale(modelMat, glm.vec3(r, r, r))
+        Sphere.__init__(self, modelMat)
+        self.m_r = r        
         self.d_center_radius = vki.SVVec4(glm.vec4(center[0],center[1],center[2], r))
         self.d_intensity = Spectrum(glm.vec3(color)*intensity)
         self.m_cptr = SVCombine_Create({'center_radius': self.d_center_radius, 'intensity': self.d_intensity }, '''
@@ -60,14 +60,14 @@ Spectrum sample_l(in Comb_#hash# self, in vec3 ip, inout RNGState state, inout v
     closest_hit ='''
 hitAttributeEXT vec3 hitpoint;
 #define HitInfo {HitInfo_UniformEmissive}
-void write_payload(in HitInfo hitinfo);
+void update_payload(in HitInfo hitinfo);
 void main()
 {{
     HitInfo hitinfo;
     hitinfo.t = gl_HitTEXT;
     hitinfo.light_id = int(sphere_lights.id_offset + gl_InstanceCustomIndexEXT);
     closethit(get_value(sphere_lights, gl_InstanceCustomIndexEXT), hitpoint, hitinfo);
-    write_payload(hitinfo);
+    update_payload(hitinfo);
 }}
 '''.format(HitInfo_UniformEmissive = Name_HitInfo_UniformEmissive) + define_features(Name_HitInfo_UniformEmissive)        
 

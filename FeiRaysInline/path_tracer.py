@@ -14,6 +14,57 @@ class PathTracer:
 
         self.m_rng_states = None
 
+    def trace(self, scene, num_iter = 100, interval = -1):
+        if self.m_rng_states == None:
+            print("Initializing RNG states..")
+            self.m_rng_states = vki.SVVector('RNGState', self.m_batch_size)
+            initializer = RNGInitializer()
+            initializer.InitRNGVector(self.m_rng_states)
+
+        scene.update()
+
+        apply_lights = ''
+        for key in scene.m_obj_lists:
+            sublist = scene.m_obj_lists[key]
+            if sublist['is_light_source']:
+                apply_lights += self.template_apply_lights.format(name_list = sublist['name'])
+
+        print("Doing ray-tracing..")
+
+        lst_param_names = ['camera','states', 'sky', 'pdf_lights'] 
+        for key in scene.m_obj_lists:
+            sublist = scene.m_obj_lists[key]
+            lst_param_names += [sublist['name']]
+
+        hit_shaders = []
+        for key in scene.m_obj_lists:
+            sublist = scene.m_obj_lists[key]
+            if sublist['is_geometry']:                
+                closest_hit  = self.payload + sublist['closest_hit'] + self.template_update_payload.format(apply_lights=apply_lights)
+                intersection = sublist['intersection']                
+                hit_shaders += [vki.HitShaders(closest_hit = closest_hit, intersection = intersection)]
+
+        ray_tracer = vki.RayTracer(lst_param_names, self.raygen, [self.miss], hit_shaders)
+
+        if interval == -1:
+            interval = num_iter;
+
+        lst_params = [self.m_camera, self.m_rng_states, scene.m_sky, scene.m_pdf_lights] + scene.m_lst_obj_lsts
+
+
+        i = 0
+        while i < num_iter:
+            end = i + interval
+            if end > num_iter:
+                end = num_iter
+            ray_tracer.launch(self.m_batch_size, lst_params, [scene.m_tlas], tex2ds=scene.m_tex2d_list, tex3ds=scene.m_tex3d_list, cubemaps=scene.m_cubemap_list, times_submission = end - i)
+            self.m_camera.m_film.inc_times_exposure(end - i)
+            i = end;
+
+            if i < num_iter:
+                print('%.2f%%' % (i / num_iter*100.0))
+
+
     payload = '''
 struct Payload
 {
@@ -107,10 +158,10 @@ void main()
     set_value(states, ray_id, payload.rng_state);
 }
 '''
-    write_payload = '''
+    template_update_payload = '''
 layout(location = 0) rayPayloadInEXT Payload payload;
 
-void write_payload_visibility(in HitInfo hitinfo)
+void update_payload_visibility(in HitInfo hitinfo)
 {{
     payload.distance = hitinfo.t;
 #ifdef HAS_EMISSION
@@ -120,11 +171,11 @@ void write_payload_visibility(in HitInfo hitinfo)
 #endif
 }}
 
-void write_payload(in HitInfo hitinfo)
+void update_payload(in HitInfo hitinfo)
 {{
     if (payload.is_visibility)
     {{
-        write_payload_visibility(hitinfo);
+        update_payload_visibility(hitinfo);
         return;
     }}
 
@@ -157,7 +208,7 @@ void write_payload(in HitInfo hitinfo)
             payload.is_visibility = true;
             traceRayEXT(arr_tlas[0], rayFlags, cullMask, 0, 0, 0, payload.origin, tmin, dir, tmax, 0);
 
-            if (payload.light_id == light_id || payload.distance<0.0 || light_dis <= payload.distance)
+            if (payload.light_id == light_id || payload.distance<0.0 || (light_dis>0.0 && light_dis <= payload.distance))
             {{
                 Spectrum f = evaluate_bsdf(hitinfo, -payload.direction, dir);
                 Spectrum att = mult(payload.f_att, div(f, pdfw));               
@@ -213,70 +264,17 @@ Spectrum Le(in HitInfo hitinfo, in vec3 wo)
     return get_sky_color(sky, -wo);
 }
 
-void write_payload(in HitInfo hitinfo);
+void update_payload(in HitInfo hitinfo);
 
 void main()
 {
     HitInfo hitinfo;
     hitinfo.t = -1.0;
     hitinfo.light_id = 0;
-    write_payload(hitinfo);
+    update_payload(hitinfo);
 }
 
 #define HAS_EMISSION
-''' + write_payload.format(apply_lights='')
-
-    def trace(self, scene, num_iter = 100, interval = -1):
-        if self.m_rng_states == None:
-            print("Initializing RNG states..")
-            self.m_rng_states = vki.SVVector('RNGState', self.m_batch_size)
-            initializer = RNGInitializer()
-            initializer.InitRNGVector(self.m_rng_states)
-
-        scene.update()
-
-        apply_lights = ''
-        for key in scene.m_obj_lists:
-            sublist = scene.m_obj_lists[key]
-            if sublist['is_light_source']:
-                apply_lights += self.template_apply_lights.format(name_list = sublist['name'])
-
-        print("Doing ray-tracing..")
-
-        lst_param_names = ['camera','states', 'sky', 'pdf_lights'] 
-        for key in scene.m_obj_lists:
-            sublist = scene.m_obj_lists[key]
-            lst_param_names += [sublist['name']]
-
-        hit_shaders = []
-        for key in scene.m_obj_lists:
-            sublist = scene.m_obj_lists[key]
-            if sublist['is_geometry']:                
-                closest_hit  = self.payload + sublist['closest_hit'] + self.write_payload.format(apply_lights=apply_lights)
-                intersection = sublist['intersection']                
-                hit_shaders += [vki.HitShaders(closest_hit = closest_hit, intersection = intersection)]
-
-        ray_tracer = vki.RayTracer(lst_param_names, self.raygen, [self.miss], hit_shaders)
-
-        if interval == -1:
-            interval = num_iter;
-
-        lst_params = [self.m_camera, self.m_rng_states, scene.m_sky, scene.m_pdf_lights] + scene.m_lst_obj_lsts
-
-
-        i = 0
-        while i < num_iter:
-            end = i + interval
-            if end > num_iter:
-                end = num_iter
-            ray_tracer.launch(self.m_batch_size, lst_params, [scene.m_tlas], tex2ds=scene.m_tex2d_list, tex3ds=scene.m_tex3d_list, cubemaps=scene.m_cubemap_list, times_submission = end - i)
-            self.m_camera.m_film.inc_times_exposure(end - i)
-            i = end;
-
-            if i < num_iter:
-                print('%.2f%%' % (i / num_iter*100.0))
-
-
-
+''' + template_update_payload.format(apply_lights='')
 
 

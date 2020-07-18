@@ -1,11 +1,11 @@
 import numpy as np
-import VkInline as vki
-from VkInline.SVCombine import *
+from .geometry import *
 
-class Sphere(vki.ShaderViewable):           
-    def __init__(self):
-        aabb = np.array([-1.0, -1.0, -1.0, 1.0, 1.0, 1.0], dtype = np.float32)
-        d_aabb = vki.device_vector_from_numpy(aabb)
+class Sphere(Geometry):           
+    def __init__(self, modelMat):
+        Geometry.__init__(self, modelMat)
+        self.m_aabb = np.array([-1.0, -1.0, -1.0, 1.0, 1.0, 1.0], dtype = np.float32)
+        d_aabb = vki.device_vector_from_numpy(self.m_aabb)
         self.m_blas = vki.BaseLevelAS(gpuAABB = d_aabb)        
 
     intersection = '''
@@ -45,5 +45,4 @@ void main()
     }
 
 }
-'''    
-    is_geometry = True
+'''

@@ -54,7 +54,7 @@ Spectrum sample_l(in Comb_#hash# self, in vec3 ip, inout RNGState state, inout v
 }}
 '''.format(HitInfo_UniformEmissive = Name_HitInfo_UniformEmissive))
 
-    def power(self):
+    def power(self, scene):
         return 4 * math.pi * self.m_r * self.m_r * self.d_intensity.Intensity()
 
     closest_hit ='''

@@ -11,17 +11,17 @@ height = 600
 
 scene = fri.Scene()
 
-'''
 sky_cube = np.array(Image.open('cubemap.png').convert('RGBA'))
 gpu_sky_cube = vki.Cubemap(512, 512, VK_FORMAT_R8G8B8A8_SRGB)
 gpu_sky_cube.upload(sky_cube)
 
 sky = fri.TexturedSky(scene.add_cubemap(gpu_sky_cube))
 scene.set_sky(sky)
-'''
 
+'''
 sky = fri.GradientSky((0.0,0.0,0.0), (0.0,0.0,0.0))
 scene.set_sky(sky)
+'''
 
 '''
 point_light0 = fri.PointLight((-5.0, 20.0, -5.0), (0.5, 1.0, 0.5), 200.0)
@@ -31,11 +31,17 @@ point_light1 = fri.PointLight((5.0, 20.0, 5.0), (1.0, 0.5, 0.5), 200.0)
 scene.add_object(point_light1)
 '''
 
+'''
 sphere_light0 = fri.SphereLight((-5.0, 20.0, -5.0), 0.5, (0.5, 1.0, 0.5), 300.0)
 scene.add_object(sphere_light0)
 
 sphere_light1 = fri.SphereLight((5.0, 20.0, 5.0), 0.5, (1.0, 0.5, 0.5), 300.0)
 scene.add_object(sphere_light1)
+'''
+
+dis_light = fri.DistanceLight((-1.0, 4.0, -1.0), (1.0, 1.0, 0.8), 1.0)
+scene.add_object(dis_light)
+
 
 identity = glm.identity(glm.mat4)
 
@@ -62,7 +68,7 @@ camera = fri.PerspectiveCamera(width, height, camera2world, 20.0, 0.2, 12.0)
 pt = fri.PathTracer(camera)
 
 pt.trace(scene, 100)
-img_out = camera.m_film.download_srgb(2.0)
+img_out = camera.m_film.download_srgb()
 Image.fromarray(img_out, 'RGBA').save('output.png')
 
 

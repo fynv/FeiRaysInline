@@ -13,3 +13,4 @@ from .lambert_sphere import *
 
 from .point_light import *
 from .sphere_light import *
+from .distance_light import *

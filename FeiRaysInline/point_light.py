@@ -20,7 +20,7 @@ Spectrum sample_l(in Comb_#hash# self, in vec3 ip, inout RNGState state, inout v
 }
 ''')
 
-    def power(self):
+    def power(self, scene):
         return 4.0 * self.d_intensity.Intensity()
 
     name_lst = 'point_lights'

@@ -48,13 +48,11 @@ class Scene:
             print("Building TLAS..")
             self.m_lst_obj_lsts =[]
             lst_blas = []
-            power_lights = []
             light_id_offset = 1
             self.m_aabb = None
             for key in self.m_obj_lists:
                 sublist = self.m_obj_lists[key]
                 if sublist['is_light_source']:
-                    power_lights += [light.power() for light in sublist['lst']]
                     self.m_lst_obj_lsts += [SVObjVectorEx(sublist['lst'], light_id_offset)]
                     light_id_offset += len(sublist['lst'])
                 else:
@@ -74,7 +72,12 @@ class Scene:
                         self.m_aabb[5] = max(self.m_aabb[5], aabb[5])
                 
             self.m_tlas = vki.TopLevelAS(lst_blas)
-            
+
+            power_lights = []
+            for key in self.m_obj_lists:
+                sublist = self.m_obj_lists[key]
+                if sublist['is_light_source']:
+                    power_lights += [light.power(self) for light in sublist['lst']]            
 
             sum_power = 0.0
             for p in power_lights:

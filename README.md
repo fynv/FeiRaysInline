@@ -18,8 +18,13 @@ Install Pillow (needed by the test):
 $ pip3 install pillow
 ```
 
-Clone the code then run the test:
+Clone the code then run the tests:
 ```
 $ python3 test_pathtrace.py
 ```
 <img src="doc/result.png" width="900px">
+
+```
+$ python3 test_pathtrace2.py
+```
+<img src="doc/result2.png" width="900px">

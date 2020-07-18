@@ -11,10 +11,10 @@ class LambertSphere(Sphere):
         self.d_normMat = vki.SVMat4x4(self.m_normMat)
         self.d_color  = Spectrum(color)
         self.m_cptr = SVCombine_Create({'normalMat':  self.d_normMat, 'color': self.d_color }, '''
-void closethit(in Comb_#hash# sphere, in vec3 hitpoint, inout {HitInfo_Lambert} hitinfo)
+void closethit(in Comb_#hash# self, in vec3 hitpoint, inout {HitInfo_Lambert} hitinfo)
 {{
-    hitinfo.lambert.color = sphere.color;
-    hitinfo.normal = normalize((sphere.normalMat * vec4(hitpoint, 0.0)).xyz);   
+    hitinfo.lambert.color = self.color;
+    hitinfo.normal = normalize((self.normalMat * vec4(hitpoint, 0.0)).xyz);   
 }}
 '''.format(HitInfo_Lambert = Name_HitInfo_Lambert))
 

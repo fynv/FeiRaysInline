@@ -10,6 +10,7 @@ from .scene import *
 from .path_tracer import *
 
 from .lambert_sphere import *
+from .lambert_mesh import *
 
 from .point_light import *
 from .sphere_light import *

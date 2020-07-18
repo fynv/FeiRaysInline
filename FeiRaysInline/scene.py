@@ -2,6 +2,7 @@ import glm
 import VkInline as vki
 from .sky import *
 from .SVObjVectorEx import *
+from .math_utils import *
 
 class Scene:
     def __init__(self):
@@ -77,19 +78,9 @@ class Scene:
             for key in self.m_obj_lists:
                 sublist = self.m_obj_lists[key]
                 if sublist['is_light_source']:
-                    power_lights += [light.power(self) for light in sublist['lst']]            
+                    power_lights += [light.power(self) for light in sublist['lst']]
 
-            sum_power = 0.0
-            for p in power_lights:
-                sum_power += p
-
-            pdf = 0.0
-            light_pdf = [0.0]
-            for p in power_lights:
-                pdf += p
-                light_pdf += [pdf/sum_power]
-
-            self.m_pdf_lights = vki.device_vector_from_list(light_pdf, 'float')
+            self.m_pdf_lights = Distribution1D(power_lights)
             self.m_need_update = False
 
     

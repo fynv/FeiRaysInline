@@ -1,5 +1,6 @@
 from .xorwow import *
 from .spectrum import *
+from .math_utils import *
 from .film import *
 from .camera import *
 from .sky import *

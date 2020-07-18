@@ -25,15 +25,15 @@ class PathTracer:
 
         sunlight = ''
 
-        apply_lights = ''
+        estimate_light = ''
         for key in scene.m_obj_lists:
             sublist = scene.m_obj_lists[key]
             if sublist['is_light_source']:
-                apply_lights += self.template_apply_lights.format(name_list = sublist['name'])
+                estimate_light += self.template_estimate_light.format(name_list = sublist['name'])
                 if sublist['name'] == 'sun_lights':
                     sunlight = self.sunlight
                     
-        miss = self.payload + self.template_miss.format(sunlight=sunlight) + self.template_update_payload.format(apply_lights='')
+        miss = self.payload + self.template_miss.format(sunlight=sunlight) + self.template_update_payload.format(estimate_light='')
 
         print("Doing ray-tracing..")
 
@@ -46,7 +46,7 @@ class PathTracer:
         for key in scene.m_obj_lists:
             sublist = scene.m_obj_lists[key]
             if sublist['is_geometry']:                
-                closest_hit  = self.payload + sublist['closest_hit'] + self.template_update_payload.format(apply_lights=apply_lights)
+                closest_hit  = self.payload + sublist['closest_hit'] + self.template_update_payload.format(estimate_light=estimate_light)
                 intersection = sublist['intersection']                
                 hit_shaders += [vki.HitShaders(closest_hit = closest_hit, intersection = intersection)]
 
@@ -193,18 +193,20 @@ void update_payload(in HitInfo hitinfo)
 #ifdef HAS_BSDF    
     payload.origin += payload.direction*hitinfo.t;
 
-    if (get_size(pdf_lights)>1)
+    if (get_size(pdf_lights.cdf)>1)
     {{
-        int light_id = 0;
+        float sample_light = rand01(payload.rng_state);
+        float pdf_light;
+        uint light_id = SampleDiscrete(pdf_lights, sample_light, pdf_light);
+
         vec3 dir;
         float light_dis;
-        float pdfw;
+        float pdfw=0.0;
         Spectrum intesity;
-        float sample_light = rand01(payload.rng_state);
-        float p = 0.0;
-        {apply_lights}
 
-        if (sample_light<=p && pdfw>0.0)
+        {estimate_light}
+
+        if (pdfw>0.0)
         {{
             uint cullMask = 0xff;
             float tmin = 0.001;
@@ -239,22 +241,13 @@ void update_payload(in HitInfo hitinfo)
 }}
 '''
 
-    template_apply_lights = '''
-        if (sample_light>p)
+    template_estimate_light = '''
+        if (light_id>={name_list}.id_offset && light_id-{name_list}.id_offset<get_size({name_list}))
         {{
-            for (uint i=0; i<get_size({name_list}); i++)
-            {{
-                light_id++;
-                float old_p = p;
-                p = get_value(pdf_lights, light_id);
-                if (sample_light<=p)
-                {{            
-                    intesity = sample_l(get_value({name_list}, i), payload.origin, payload.rng_state, dir, light_dis, pdfw);
-                    if (pdfw>0.0)
-                        pdfw*= p - old_p;                    
-                    break;
-                }}
-            }}
+            uint i = light_id-{name_list}.id_offset;
+            intesity = sample_l(get_value({name_list}, i), payload.origin, payload.rng_state, dir, light_dis, pdfw);
+            if (pdfw>0.0)
+                pdfw*= pdf_light;
         }}
 '''
 

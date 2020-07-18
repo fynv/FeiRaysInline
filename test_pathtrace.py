@@ -24,27 +24,27 @@ scene.set_sky(sky)
 '''
 
 '''
-point_light0 = fri.PointLight((-5.0, 20.0, -5.0), (0.5, 1.0, 0.5), 200.0)
+point_light0 = fri.PointLight((-5.0, 20.0, -5.0), (0.5, 1.0, 0.5), 1000.0)
 scene.add_object(point_light0)
 
-point_light1 = fri.PointLight((5.0, 20.0, 5.0), (1.0, 0.5, 0.5), 200.0)
+point_light1 = fri.PointLight((5.0, 20.0, 5.0), (1.0, 0.5, 0.5), 1000.0)
 scene.add_object(point_light1)
 '''
 
 '''
-sphere_light0 = fri.SphereLight((-5.0, 20.0, -5.0), 0.5, (0.5, 1.0, 0.5), 300.0)
+sphere_light0 = fri.SphereLight((-5.0, 20.0, -5.0), 0.5, (0.5, 1.0, 0.5), 1500.0)
 scene.add_object(sphere_light0)
 
-sphere_light1 = fri.SphereLight((5.0, 20.0, 5.0), 0.5, (1.0, 0.5, 0.5), 300.0)
+sphere_light1 = fri.SphereLight((5.0, 20.0, 5.0), 0.5, (1.0, 0.5, 0.5), 1500.0)
 scene.add_object(sphere_light1)
 '''
 
 '''
-dis_light = fri.DistanceLight((-1.0, 4.0, -1.0), (1.0, 1.0, 0.8), 1.0)
+dis_light = fri.DistanceLight((-1.0, 4.0, -1.0), (1.0, 1.0, 0.8), 5.0)
 scene.add_object(dis_light)
 '''
 
-sun_light = fri.SunLight((-1.0, 4.0, -1.0), 0.05, (1.0, 1.0, 0.8), 150.0)
+sun_light = fri.SunLight((-1.0, 4.0, -1.0), 0.05, (1.0, 1.0, 0.8), 750.0)
 scene.add_object(sun_light)
 
 identity = glm.identity(glm.mat4)

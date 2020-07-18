@@ -39,9 +39,13 @@ sphere_light1 = fri.SphereLight((5.0, 20.0, 5.0), 0.5, (1.0, 0.5, 0.5), 300.0)
 scene.add_object(sphere_light1)
 '''
 
+'''
 dis_light = fri.DistanceLight((-1.0, 4.0, -1.0), (1.0, 1.0, 0.8), 1.0)
 scene.add_object(dis_light)
+'''
 
+sun_light = fri.SunLight((-1.0, 4.0, -1.0), 0.05, (1.0, 1.0, 0.8), 150.0)
+scene.add_object(sun_light)
 
 identity = glm.identity(glm.mat4)
 

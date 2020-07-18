@@ -23,11 +23,17 @@ class PathTracer:
 
         scene.update()
 
+        sunlight = ''
+
         apply_lights = ''
         for key in scene.m_obj_lists:
             sublist = scene.m_obj_lists[key]
             if sublist['is_light_source']:
                 apply_lights += self.template_apply_lights.format(name_list = sublist['name'])
+                if sublist['name'] == 'sun_lights':
+                    sunlight = self.sunlight
+                    
+        miss = self.payload + self.template_miss.format(sunlight=sunlight) + self.template_update_payload.format(apply_lights='')
 
         print("Doing ray-tracing..")
 
@@ -44,7 +50,8 @@ class PathTracer:
                 intersection = sublist['intersection']                
                 hit_shaders += [vki.HitShaders(closest_hit = closest_hit, intersection = intersection)]
 
-        ray_tracer = vki.RayTracer(lst_param_names, self.raygen, [self.miss], hit_shaders)
+
+        ray_tracer = vki.RayTracer(lst_param_names, self.raygen, [miss], hit_shaders)
 
         if interval == -1:
             interval = num_iter;
@@ -180,8 +187,7 @@ void update_payload(in HitInfo hitinfo)
     }}
 
 #ifdef HAS_EMISSION
-    if (hitinfo.light_id == 0 || payload.depth<1)
-        incr(payload.color, mult(Le(hitinfo, -payload.direction), payload.f_att));
+    incr(payload.color, mult(Le(hitinfo, -payload.direction, payload.depth), payload.f_att));
 #endif
     
 #ifdef HAS_BSDF    
@@ -252,29 +258,45 @@ void update_payload(in HitInfo hitinfo)
         }}
 '''
 
-    miss = payload + '''
+    template_miss = '''
 struct HitInfo
-{
+{{
     float t;
     int light_id;
-};
+}};
 
-Spectrum Le(in HitInfo hitinfo, in vec3 wo)
-{
-    return get_sky_color(sky, -wo);
-}
+Spectrum Le(in HitInfo hitinfo, in vec3 wo, int depth_iter)
+{{
+    Spectrum color = get_sky_color(sky, -wo);
+    {sunlight}
+    return color;
+}}
 
 void update_payload(in HitInfo hitinfo);
 
 void main()
-{
+{{
     HitInfo hitinfo;
     hitinfo.t = -1.0;
     hitinfo.light_id = 0;
     update_payload(hitinfo);
-}
+}}
 
 #define HAS_EMISSION
-''' + template_update_payload.format(apply_lights='')
-
+'''
+    sunlight = '''
+    if (depth_iter<1)
+    {                    
+        for (uint i=0; i<get_size(sun_lights); i++)
+        {
+            vec4 dir_radian = get_value(sun_lights, i).dir_radian;
+            float theta = acos(dot(-wo, dir_radian.xyz));
+            if (theta<dir_radian.w)
+            {
+                incr(color, get_value(sun_lights, i).intensity);
+                break;
+            }
+        }
+    }
+'''
 

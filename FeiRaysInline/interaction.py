@@ -86,9 +86,14 @@ class HitInfo_UniformEmissive(vki.ShaderViewable):
         self.m_light_id = vki.SVInt32(0)        
         self.m_intensity = Spectrum()
         self.m_cptr = SVCombine_Create({'t':  self.m_t, 'light_id': self.m_light_id, 'intensity': self.m_intensity}, '''
-Spectrum Le(in Comb_#hash# self, in vec3 wo)
+Spectrum Le(in Comb_#hash# self, in vec3 wo, int depth_iter)
 {
-    return self.intensity;
+    Spectrum ret = self.intensity;
+    if (depth_iter>0)
+    {
+        from_rgb(ret, vec3(0.0));
+    }
+    return ret;
 }
 ''')
 

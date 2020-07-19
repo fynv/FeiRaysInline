@@ -21,7 +21,7 @@ camera = fri.PerspectiveCamera(width, height, camera2world , 20.0)
 sphere_light = fri.SphereLight((0.0, 0.0, 0.0), 1.0, (0.5, 0.5, 0.5), 1.0)
 
 
-kernel = vki.For(['width', 'height', 'camera', 'sphere_light', 'states'], 'inner', '''
+kernel = vki.For(['camera', 'sphere_light', 'states'], 'inner', '''
 void inner(uint idx)
 {
 	RNGState state = get_value(states, idx);
@@ -51,7 +51,7 @@ void inner(uint idx)
 
 exposure_rate = count / (width*height)
 times_submission = 1
-kernel.launch_n(count, [vki.SVInt32(width), vki.SVInt32(height), camera, sphere_light, states], times_submission=times_submission)
+kernel.launch_n(count, [camera, sphere_light, states], times_submission=times_submission)
 camera.m_film.inc_times_exposure(exposure_rate*times_submission)
 
 img_out = camera.m_film.download_srgb()

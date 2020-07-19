@@ -8,16 +8,16 @@ height = 480
 
 film = fri.Film(width, height)
 
-kernel = vki.Computer(['width', 'height', 'film'],
+kernel = vki.Computer(['film'],
 '''
 void main()
 {
     int x = int(gl_GlobalInvocationID.x);
     int y = int(gl_GlobalInvocationID.y);
-    if (x >= width || y>=height) return;
+    if (x >= film.width || y>=film.height) return;
 
-    float u = (float(x)+0.5)/float(width);
-    float v = (float(y)+0.5)/float(height);
+    float u = (float(x)+0.5)/float(film.width);
+    float v = (float(y)+0.5)/float(film.height);
 
     incr_pixel(film, x, y, vec3(u, v, 0));
 }
@@ -25,7 +25,7 @@ void main()
 
 blockSize = (8,8)
 gridSize = (int((width+7)/8), int((height+7)/8))
-kernel.launch(gridSize, blockSize, [vki.SVInt32(width), vki.SVInt32(height), film])
+kernel.launch(gridSize, blockSize, [film])
 film.inc_times_exposure()
 
 img_out = film.download_srgb()

@@ -34,9 +34,9 @@ void incr_pixel(in Comb_#hash# img, int x, int y, in Spectrum col)
 }
 
 ''')
-		self.m_times_exposure = 0
+		self.m_times_exposure = 0.0
 
-	def inc_times_exposure(self, count = 1):
+	def inc_times_exposure(self, count = 1.0):
 		self.m_times_exposure += count
 
 
@@ -61,14 +61,14 @@ void main()
 	int x = int(vUV.x * float(film.width));
 	int y = int(vUV.y * float(film.height));
 	vec3 xyz = read_pixel(film, x, y);
-	xyz *= boost/float(times_expo);
+	xyz *= boost/times_expo;
 	vec3 rgb = clamp(xyz2rgb(xyz), 0.0, 1.0);
 	outColor = vec4(rgb, 1.0);
 }
 '''))
 
 	def download_srgb(self, boost=1.0):
-		sv_times_expo = vki.SVInt32(self.m_times_exposure)
+		sv_times_expo = vki.SVFloat(self.m_times_exposure)
 		sv_boost = vki.SVFloat(boost)
 		colorBuf = vki.Texture2D(self.m_width, self.m_height, VK_FORMAT_R8G8B8A8_SRGB)
 		self.film2srgb.launch([3], [colorBuf], None, [0.5, 0.5, 0.5, 1.0], 1.0, [self, sv_times_expo, sv_boost])

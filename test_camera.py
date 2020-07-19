@@ -22,13 +22,13 @@ gpu_sky_cube.upload(sky_cube)
 sky = fri.TexturedSky(0)
 
 
-kernel = vki.Computer(['width', 'height', 'camera', 'sky'],
+kernel = vki.Computer(['camera', 'sky'],
 '''
 void main()
 {
     int x = int(gl_GlobalInvocationID.x);
     int y = int(gl_GlobalInvocationID.y);
-    if (x >= width || y>=height) return;
+    if (x >= camera.film.width || y>=camera.film.height) return;
 
     float fx = float(x)+0.5;
     float fy = float(y)+0.5;
@@ -43,7 +43,7 @@ void main()
 
 blockSize = (8,8)
 gridSize = (int((width+7)/8), int((height+7)/8))
-kernel.launch(gridSize, blockSize, [vki.SVInt32(width), vki.SVInt32(height), camera, sky], cubemaps = [gpu_sky_cube])
+kernel.launch(gridSize, blockSize, [camera, sky], cubemaps = [gpu_sky_cube])
 camera.m_film.inc_times_exposure()
 
 img_out = camera.m_film.download_srgb()

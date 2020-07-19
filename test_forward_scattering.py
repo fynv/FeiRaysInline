@@ -43,8 +43,7 @@ void inner(uint idx)
 	float x = 0.5*float(camera.film.width) + dot(vec_pix, dir_x)/camera.size_pix;
 	float y = 0.5*float(camera.film.height) - dot(vec_pix, dir_y)/camera.size_pix;
 
-	incr_pixel(camera.film, int(x), int(y), col);	
-
+	incr_pixel_atomic(camera.film, int(x), int(y), col);	
 	set_value(states, idx, state);
 }
 ''')

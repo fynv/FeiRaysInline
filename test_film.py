@@ -19,7 +19,7 @@ void main()
     float u = (float(x)+0.5)/float(film.width);
     float v = (float(y)+0.5)/float(film.height);
 
-    incr_pixel(film, x, y, vec3(u, v, 0));
+    incr_pixel(film, x, y, uvec3(u*255.0+0.5, v*255.0+0.5, 0));
 }
 ''')
 

@@ -86,7 +86,6 @@ struct Payload
     vec3 direction;    
 
     float distance;
-    int light_id;
 };
 '''
 
@@ -171,11 +170,6 @@ layout(location = 0) rayPayloadInEXT Payload payload;
 void update_payload_visibility(in HitInfo hitinfo)
 {{
     payload.distance = hitinfo.t;
-#ifdef HAS_EMISSION
-    payload.light_id = hitinfo.light_id;
-#else
-    payload.light_id = -1;
-#endif
 }}
 
 void update_payload(in HitInfo hitinfo)
@@ -216,7 +210,7 @@ void update_payload(in HitInfo hitinfo)
             payload.is_visibility = true;
             traceRayEXT(arr_tlas[0], rayFlags, cullMask, 0, 0, 0, payload.origin, tmin, dir, tmax, 0);
 
-            if (payload.light_id == light_id || payload.distance<0.0 || (light_dis>0.0 && light_dis <= payload.distance))
+            if (payload.distance<0.0 || (light_dis>0.0 && light_dis - 0.001 <= payload.distance))
             {{
                 Spectrum f = evaluate_bsdf(hitinfo, -payload.direction, dir);
                 Spectrum att = mult(payload.f_att, div(f, pdfw));               

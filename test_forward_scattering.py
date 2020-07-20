@@ -14,9 +14,9 @@ states = vki.SVVector('RNGState', count)
 initializer = fri.RNGInitializer()
 initializer.InitRNGVector(states)
 
-world2camera = glm.lookAt(glm.vec3(0.0, 0.0, 10.0), glm.vec3(0.0, 0.0, 0.0), glm.vec3(0.0, 1.0, 0.0))
+world2camera = glm.lookAt(glm.vec3(0.0, 0.0, 1.5), glm.vec3(0.0, 0.0, 0.0), glm.vec3(0.0, 1.0, 0.0))
 camera2world = glm.inverse(world2camera)
-camera = fri.PerspectiveCamera(width, height, camera2world , 20.0)
+camera = fri.PerspectiveCamera(width, height, camera2world , 90.0)
 
 sphere_light = fri.SphereLight((0.0, 0.0, 0.0), 1.0, (0.5, 0.5, 0.5), 1.0)
 
@@ -40,10 +40,13 @@ void inner(uint idx)
 	float distance;
 	float pdfw; 
 	Spectrum col = sample_l(sphere_light, origin_world, state, dirToLight, distance, pdfw);	
-	float p = pdfw * (camera.size_pix*camera.size_pix*float(camera.film.width)*float(camera.film.height)*dot(dir_center, dirToLight))/(camera.focus_dist*camera.focus_dist);
+	vec3 vec_pix = dirToLight * camera.focus_dist / dot(dirToLight, dir_center);
+	float f = length(vec_pix);
+
+	float p = pdfw * (camera.size_pix*camera.size_pix*float(camera.film.width)*float(camera.film.height)*dot(dir_center, dirToLight))/(f*f);
 	amplify(col, 1.0/p);
 
-	vec3 vec_pix = dirToLight * camera.focus_dist / dot(dirToLight, dir_center);
+	
 
 	float x = 0.5*float(camera.film.width) + (dot(vec_pix, dir_x) + origin_camera.x)/camera.size_pix;
 	float y = 0.5*float(camera.film.height) - (dot(vec_pix, dir_y) + origin_camera.y)/camera.size_pix;

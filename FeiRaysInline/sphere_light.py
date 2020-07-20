@@ -25,8 +25,8 @@ Spectrum sample_l(in Comb_#hash# self, in vec3 ip, inout RNGState state, inout v
     vec3 dir = self.center_radius.xyz - ip;
     float dis2center = length(dir);
     dir *= 1.0/dis2center;
-    float factor = self.center_radius.w/dis2center;
-    factor = 1.0 - sqrt(1.0 - factor*factor);
+
+    float factor = (dis2center - self.center_radius.w)/dis2center;
 
     float r1 = rand01(state);
     float r2 = rand01(state) * radians(360.0);
@@ -44,12 +44,17 @@ Spectrum sample_l(in Comb_#hash# self, in vec3 ip, inout RNGState state, inout v
     float v_x = v_xy * cos(r2);
     float v_y = v_xy * sin(r2);
 
-    dirToLight = v_z*dir + a*v_x + b*v_y;
+    vec3 offset_dir = a*v_x + b*v_y - v_z*dir;
+    vec3 pos = self.center_radius.xyz + offset_dir *self.center_radius.w;
 
-    distance = 3.402823466e+38;
+    dirToLight = pos - ip;
+    distance = length(dirToLight);
+    dirToLight *= 1.0/distance;
 
-    pdfw = 1.0/(radians(360.0)*factor);
-    return self.intensity;    
+    float p = 1.0/(radians(360.0)*self.center_radius.w*self.center_radius.w*factor);
+    pdfw = p*distance*distance/dot(dirToLight, -offset_dir);
+
+    return self.intensity;
 
 }}
 '''.format(HitInfo_UniformEmissive = Name_HitInfo_UniformEmissive))
